@@ -77,6 +77,10 @@ supabase: Client = init_supabase()
 # Configuration
 MAX_SLOTS_PER_DATE = 22
 DATES = ['December 2', 'December 4']
+DATE_DISPLAY = {
+    'December 2': '02 Dec',
+    'December 4': '04 Dec'
+}
 
 # Load slot tracker
 @st.cache_data(ttl=5)
@@ -88,7 +92,7 @@ slot_tracker = load_slot_tracker()
 
 # Header
 st.markdown('<div class="main-header">Student Presentation Sign-Up</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Reserve your presentation slot for December 2nd or 4th</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Reserve your presentation slot for 02 Dec or 04 Dec</div>', unsafe_allow_html=True)
 
 # Availability section
 st.markdown('<div class="section-header">Slot Availability</div>', unsafe_allow_html=True)
@@ -101,14 +105,14 @@ with col1:
     if dec2_remaining > 0:
         st.markdown(f"""
             <div class="availability-box available">
-                <strong>December 2</strong><br>
+                <strong>02 Dec</strong><br>
                 {dec2_remaining} of {MAX_SLOTS_PER_DATE} slots available
             </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
             <div class="availability-box full">
-                <strong>December 2</strong><br>
+                <strong>02 Dec</strong><br>
                 FULL - No slots remaining
             </div>
         """, unsafe_allow_html=True)
@@ -119,14 +123,14 @@ with col2:
     if dec4_remaining > 0:
         st.markdown(f"""
             <div class="availability-box available">
-                <strong>December 4</strong><br>
+                <strong>04 Dec</strong><br>
                 {dec4_remaining} of {MAX_SLOTS_PER_DATE} slots available
             </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
             <div class="availability-box full">
-                <strong>December 4</strong><br>
+                <strong>04 Dec</strong><br>
                 FULL - No slots remaining
             </div>
         """, unsafe_allow_html=True)
@@ -156,6 +160,7 @@ else:
             date = st.selectbox(
                 "Presentation Date",
                 available_dates,
+                format_func=lambda x: DATE_DISPLAY[x],
                 help="Select the date you'd like to present"
             )
             
@@ -167,8 +172,8 @@ else:
             )
             
             student_ids = st.text_input(
-                "Student ID(s)",
-                placeholder="e.g., 12345678 or 12345678, 87654321, 11223344",
+                "Student uni",
+                placeholder="e.g., ab0000",
                 help="Enter student IDs separated by commas for group presentations"
             )
             
@@ -194,7 +199,7 @@ else:
                             st.success(f"""
                             **Booking Confirmed**
                             
-                            Date: {date}  
+                            Date: {DATE_DISPLAY[date]}  
                             Time slots: {response['start_slot']}-{response['end_slot']}  
                             Duration: {group_size * 3} minutes  
                             Student(s): {student_ids}
@@ -222,18 +227,12 @@ if not bookings_df.empty:
     for date in DATES:
         date_bookings = bookings_df[bookings_df['date'] == date]
         if not date_bookings.empty:
-            with st.expander(f"{date} ({len(date_bookings)} booking{'s' if len(date_bookings) > 1 else ''})"):
+            with st.expander(f"{DATE_DISPLAY[date]} ({len(date_bookings)} booking{'s' if len(date_bookings) > 1 else ''})"):
                 display_df = date_bookings[['student_ids', 'group_size', 'start_slot', 'end_slot', 'created_at']].copy()
                 display_df.columns = ['Student ID(s)', 'Group Size', 'Start Slot', 'End Slot', 'Booked At']
                 st.dataframe(display_df, use_container_width=True, hide_index=True)
     
     csv = bookings_df.to_csv(index=False)
-    st.download_button(
-        label="Download All Bookings (CSV)",
-        data=csv,
-        file_name=f"presentation_bookings_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
+
 else:
-    st.info("No bookings yet. Be the first to sign up!")
+    st.info("No bookings yet. Be the first to sign up.")
