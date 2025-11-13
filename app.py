@@ -135,7 +135,7 @@ if st.session_state.booking_completed:
     details = st.session_state.booking_details
     st.markdown(f"""
         <div class="success-banner">
-            <h1>✅ Booking Complete!</h1>
+            <h1>Booking Complete</h1>
             <p><strong>Date:</strong> {details['date']}</p>
             <p><strong>Time Slots:</strong> {details['start_slot']}-{details['end_slot']}</p>
             <p><strong>Duration:</strong> {details['duration']} minutes</p>
@@ -209,14 +209,25 @@ else:
         if not available_dates:
             st.error("No dates currently available.")
         else:
-            # Horizontal radio buttons with spacing
-            date = st.radio(
-                "Presentation Date",
-                available_dates,
-                format_func=lambda x: DATE_DISPLAY[x],
-                help="Select the date you'd like to present",
-                horizontal=True
-            )
+            # Try pills (Streamlit 1.34+), fallback to radio if not available
+            try:
+                date = st.pills(
+                    "Presentation Date",
+                    available_dates,
+                    format_func=lambda x: DATE_DISPLAY[x],
+                    default=available_dates[0],
+                    selection_mode="single",
+                    help="Select the date you'd like to present"
+                )
+            except (AttributeError, TypeError):
+                # Fallback to horizontal radio buttons
+                date = st.radio(
+                    "Presentation Date",
+                    available_dates,
+                    format_func=lambda x: DATE_DISPLAY[x],
+                    help="Select the date you'd like to present",
+                    horizontal=True
+                )
             
             group_size = st.radio(
                 "Number of Members",
