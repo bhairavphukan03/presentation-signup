@@ -173,7 +173,6 @@ else:
             
             student_ids = st.text_input(
                 "Student uni",
-                placeholder="e.g., ab0000",
                 help="Enter student IDs separated by commas for group presentations"
             )
             
