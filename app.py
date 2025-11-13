@@ -157,12 +157,24 @@ else:
         if not available_dates:
             st.error("No dates currently available.")
         else:
-            date = st.selectbox(
-                "Presentation Date",
-                available_dates,
-                format_func=lambda x: DATE_DISPLAY[x],
-                help="Select the date you'd like to present"
-            )
+            # Try segmented control (Streamlit 1.31+), fallback to radio if not available
+            try:
+                date = st.segmented_control(
+                    "Presentation Date",
+                    available_dates,
+                    format_func=lambda x: DATE_DISPLAY[x],
+                    default=available_dates[0],
+                    help="Select the date you'd like to present"
+                )
+            except AttributeError:
+                # Fallback to radio if segmented_control not available
+                date = st.radio(
+                    "Presentation Date",
+                    available_dates,
+                    format_func=lambda x: DATE_DISPLAY[x],
+                    help="Select the date you'd like to present",
+                    horizontal=True
+                )
             
             group_size = st.radio(
                 "Number of Members",
