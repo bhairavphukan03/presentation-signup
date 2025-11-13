@@ -165,9 +165,9 @@ else:
             )
             
             group_size = st.radio(
-                "Number of Presenters",
+                "Number of Members",
                 [1, 2, 3],
-                format_func=lambda x: f"{x} presenter{'s' if x > 1 else ''} ({x * 3} minutes)",
+                format_func=lambda x: f"{x} member{'s' if x > 1 else ''} ({x * 3} minutes)",
                 help="Select how many people are in your presentation group"
             )
             
