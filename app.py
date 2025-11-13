@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 from supabase import create_client, Client
+import json
 
 # Page config
 st.set_page_config(page_title="Presentation Sign-Up", layout="centered")
@@ -62,6 +63,27 @@ st.markdown("""
         border: none;
         border-top: 2px solid #e0e0e0;
     }
+    /* Add spacing between radio buttons */
+    div[role="radiogroup"] label {
+        margin-right: 2rem !important;
+    }
+    .success-banner {
+        background-color: #d4edda;
+        border: 2px solid #28a745;
+        border-radius: 10px;
+        padding: 2rem;
+        text-align: center;
+        margin: 2rem 0;
+    }
+    .success-banner h1 {
+        color: #28a745;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    .success-banner p {
+        font-size: 1.2rem;
+        color: #155724;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -82,17 +104,47 @@ DATE_DISPLAY = {
     'December 4': '4 Dec'
 }
 
+# Initialize session state for booking completion
+if 'booking_completed' not in st.session_state:
+    st.session_state.booking_completed = False
+if 'booking_details' not in st.session_state:
+    st.session_state.booking_details = None
+
 # Load slot tracker
 @st.cache_data(ttl=5)
 def load_slot_tracker():
     response = supabase.table('slot_tracker').select('*').execute()
     return {row['date']: row['slots_used'] for row in response.data}
 
+# Check if student already booked
+def check_existing_booking(student_id):
+    try:
+        response = supabase.table('bookings').select('*').ilike('student_ids', f'%{student_id}%').execute()
+        return len(response.data) > 0
+    except:
+        return False
+
 slot_tracker = load_slot_tracker()
 
 # Header
 st.markdown('<div class="main-header">Student Presentation Sign-Up</div>', unsafe_allow_html=True)
 st.markdown('<div class="subtitle">Reserve your presentation slot for 2 Dec or 4 Dec</div>', unsafe_allow_html=True)
+
+# If booking completed, show success banner and stop
+if st.session_state.booking_completed:
+    details = st.session_state.booking_details
+    st.markdown(f"""
+        <div class="success-banner">
+            <h1>✅ Booking Complete!</h1>
+            <p><strong>Date:</strong> {details['date']}</p>
+            <p><strong>Time Slots:</strong> {details['start_slot']}-{details['end_slot']}</p>
+            <p><strong>Duration:</strong> {details['duration']} minutes</p>
+            <p><strong>Student(s):</strong> {details['student_ids']}</p>
+            <br>
+            <p style="font-size: 1rem; color: #666;">You can close this page now.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    st.stop()
 
 # Availability section
 st.markdown('<div class="section-header">Slot Availability</div>', unsafe_allow_html=True)
@@ -141,7 +193,7 @@ st.markdown("<hr>", unsafe_allow_html=True)
 both_full = dec2_remaining <= 0 and dec4_remaining <= 0
 
 if both_full:
-    st.error("All presentation slots have been filled. Please contact your instructor if you need assistance.")
+    st.error("All presentation slots have been filled. Please contact TA if you need assistance.")
 else:
     # Booking form
     st.markdown('<div class="section-header">Book Your Slot</div>', unsafe_allow_html=True)
@@ -157,24 +209,14 @@ else:
         if not available_dates:
             st.error("No dates currently available.")
         else:
-            # Try segmented control (Streamlit 1.31+), fallback to radio if not available
-            try:
-                date = st.segmented_control(
-                    "Presentation Date",
-                    available_dates,
-                    format_func=lambda x: DATE_DISPLAY[x],
-                    default=available_dates[0],
-                    help="Select the date you'd like to present"
-                )
-            except AttributeError:
-                # Fallback to radio if segmented_control not available
-                date = st.radio(
-                    "Presentation Date",
-                    available_dates,
-                    format_func=lambda x: DATE_DISPLAY[x],
-                    help="Select the date you'd like to present",
-                    horizontal=True
-                )
+            # Horizontal radio buttons with spacing
+            date = st.radio(
+                "Presentation Date",
+                available_dates,
+                format_func=lambda x: DATE_DISPLAY[x],
+                help="Select the date you'd like to present",
+                horizontal=True
+            )
             
             group_size = st.radio(
                 "Number of Members",
@@ -196,32 +238,68 @@ else:
                 if not student_ids.strip():
                     st.error("Please enter at least one student ID")
                 else:
-                    # Call the atomic booking function
-                    try:
-                        result = supabase.rpc('book_slot', {
-                            'p_date': date,
-                            'p_group_size': group_size,
-                            'p_student_ids': student_ids.strip()
-                        }).execute()
-                        
-                        response = result.data
-                        
-                        if response['success']:
-                            st.success(f"""
-                            **Booking Confirmed**
+                    # Check if student already booked
+                    first_student_id = student_ids.strip().split(',')[0].strip()
+                    if check_existing_booking(first_student_id):
+                        st.error("You have already booked a slot. Each student can only book once.")
+                    else:
+                        # Call the atomic booking function
+                        try:
+                            result = supabase.rpc('book_slot', {
+                                'p_date': date,
+                                'p_group_size': group_size,
+                                'p_student_ids': student_ids.strip()
+                            }).execute()
                             
-                            Date: {DATE_DISPLAY[date]}  
-                            Time slots: {response['start_slot']}-{response['end_slot']}  
-                            Duration: {group_size * 3} minutes  
-                            Student(s): {student_ids}
-                            """)
-                            # Clear cache to refresh availability
-                            st.cache_data.clear()
-                            st.rerun()
-                        else:
-                            st.error(f"{response['message']}. Only {response['slots_remaining']} slots remaining.")
-                    except Exception as e:
-                        st.error(f"Booking failed: {str(e)}")
+                            # Handle response (it might be in .data or need parsing)
+                            response = result.data
+                            
+                            # If response is a string, try to parse it
+                            if isinstance(response, str):
+                                try:
+                                    response = json.loads(response)
+                                except:
+                                    st.error("Unable to process booking. Please try again or contact TA.")
+                                    st.stop()
+                            
+                            if response and response.get('success'):
+                                # Set booking completion flag
+                                st.session_state.booking_completed = True
+                                st.session_state.booking_details = {
+                                    'date': DATE_DISPLAY[date],
+                                    'start_slot': response['start_slot'],
+                                    'end_slot': response['end_slot'],
+                                    'duration': group_size * 3,
+                                    'student_ids': student_ids
+                                }
+                                st.rerun()
+                            else:
+                                # Simple error message
+                                remaining = response.get('slots_remaining', 0) if response else 0
+                                if remaining > 0:
+                                    st.error(f"Not enough slots available for {DATE_DISPLAY[date]}. Only {remaining} slot(s) remaining. Please try the other date.")
+                                else:
+                                    st.error(f"No slots available for {DATE_DISPLAY[date]}. Please try the other date.")
+                                    
+                        except Exception as e:
+                            # Try to extract useful error info
+                            error_str = str(e)
+                            if 'not enough slots' in error_str.lower():
+                                st.error("Not enough slots available for your selected date. Please try the other date.")
+                            elif 'details' in error_str and 'slots_remaining' in error_str:
+                                # Try to parse from error details
+                                try:
+                                    import re
+                                    match = re.search(r'slots_remaining["\s:]+(\d+)', error_str)
+                                    if match:
+                                        remaining = match.group(1)
+                                        st.error(f"Not enough slots available. Only {remaining} slot(s) remaining on this date.")
+                                    else:
+                                        st.error("Unable to complete booking. Please try the other date or contact TA.")
+                                except:
+                                    st.error("Unable to complete booking. Please try the other date or contact TA.")
+                            else:
+                                st.error("Booking failed. Please try again or contact TA if the problem persists.")
 
 # Bookings overview
 st.markdown("<hr>", unsafe_allow_html=True)
