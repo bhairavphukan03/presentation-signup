@@ -78,8 +78,8 @@ supabase: Client = init_supabase()
 MAX_SLOTS_PER_DATE = 22
 DATES = ['December 2', 'December 4']
 DATE_DISPLAY = {
-    'December 2': '02 Dec',
-    'December 4': '04 Dec'
+    'December 2': '2 Dec',
+    'December 4': '4 Dec'
 }
 
 # Load slot tracker
@@ -92,7 +92,7 @@ slot_tracker = load_slot_tracker()
 
 # Header
 st.markdown('<div class="main-header">Student Presentation Sign-Up</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Reserve your presentation slot for 02 Dec or 04 Dec</div>', unsafe_allow_html=True)
+st.markdown('<div class="subtitle">Reserve your presentation slot for 2 Dec or 4 Dec</div>', unsafe_allow_html=True)
 
 # Availability section
 st.markdown('<div class="section-header">Slot Availability</div>', unsafe_allow_html=True)
@@ -105,14 +105,14 @@ with col1:
     if dec2_remaining > 0:
         st.markdown(f"""
             <div class="availability-box available">
-                <strong>02 Dec</strong><br>
+                <strong>2 Dec</strong><br>
                 {dec2_remaining} of {MAX_SLOTS_PER_DATE} slots available
             </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
             <div class="availability-box full">
-                <strong>02 Dec</strong><br>
+                <strong>2 Dec</strong><br>
                 FULL - No slots remaining
             </div>
         """, unsafe_allow_html=True)
@@ -123,14 +123,14 @@ with col2:
     if dec4_remaining > 0:
         st.markdown(f"""
             <div class="availability-box available">
-                <strong>04 Dec</strong><br>
+                <strong>4 Dec</strong><br>
                 {dec4_remaining} of {MAX_SLOTS_PER_DATE} slots available
             </div>
         """, unsafe_allow_html=True)
     else:
         st.markdown(f"""
             <div class="availability-box full">
-                <strong>04 Dec</strong><br>
+                <strong>4 Dec</strong><br>
                 FULL - No slots remaining
             </div>
         """, unsafe_allow_html=True)
