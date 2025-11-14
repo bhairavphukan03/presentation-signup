@@ -22,6 +22,34 @@ st.markdown("""
     div[data-testid="stToolbar"] {display: none;}
     div[data-testid="stDecoration"] {display: none;}
     div[data-testid="stStatusWidget"] {display: none;}
+
+    /* Hide footer - multiple selectors for different Streamlit versions */
+    footer {
+        visibility: hidden !important;
+        display: none !important;
+    }
+    .streamlit-footer {
+        display: none !important;
+    }
+    footer:after {
+        content: none !important;
+    }
+    footer::after {
+        display: none !important;
+    }
+    /* Target by class */
+    .st-emotion-cache-h5rgaw {
+        display: none !important;
+    }
+    /* Target all footers */
+    body > footer,
+    .main > footer,
+    [data-testid="stFooter"],
+    footer[class*="st-emotion-cache"] {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    
     .main-header {
         font-size: 2.5rem;
         font-weight: 700;
