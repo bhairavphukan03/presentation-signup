@@ -10,8 +10,6 @@ st.set_page_config(page_title="Presentation Sign-Up", layout="centered")
 # Custom CSS
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
     .main-header {
         font-size: 2.5rem;
         font-weight: 700;
