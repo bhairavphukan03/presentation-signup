@@ -10,6 +10,8 @@ st.set_page_config(page_title="Presentation Sign-Up", layout="centered")
 # Custom CSS
 st.markdown("""
     <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
     .main-header {
         font-size: 2.5rem;
         font-weight: 700;
@@ -316,13 +318,7 @@ else:
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown('<div class="section-header">Current Bookings</div>', unsafe_allow_html=True)
 
-hide_streamlit_style = """
-            <style>
-            #MainMenu {visibility: hidden;}
-            footer {visibility: hidden;}
-            </style>
-            """
-st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 
 @st.cache_data(ttl=5)
 def load_bookings():
