@@ -316,6 +316,14 @@ else:
 st.markdown("<hr>", unsafe_allow_html=True)
 st.markdown('<div class="section-header">Current Bookings</div>', unsafe_allow_html=True)
 
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
 @st.cache_data(ttl=5)
 def load_bookings():
     response = supabase.table('bookings').select('*').order('created_at').execute()
