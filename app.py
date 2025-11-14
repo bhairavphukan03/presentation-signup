@@ -10,6 +10,18 @@ st.set_page_config(page_title="Presentation Sign-Up", layout="centered")
 # Custom CSS
 st.markdown("""
     <style>
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Alternative selectors for newer Streamlit versions */
+    .viewerBadge_container__1QSob {display: none;}
+    .styles_viewerBadge__1yB5_ {display: none;}
+    footer.st-emotion-cache-1wmy9hl {display: none;}
+    div[data-testid="stToolbar"] {display: none;}
+    div[data-testid="stDecoration"] {display: none;}
+    div[data-testid="stStatusWidget"] {display: none;}
     .main-header {
         font-size: 2.5rem;
         font-weight: 700;
